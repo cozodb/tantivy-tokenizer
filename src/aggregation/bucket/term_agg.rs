@@ -30,10 +30,6 @@ use crate::TantivyError;
 /// Term aggregations work only on [fast fields](`crate::fastfield`) of type `u64`, `f64`, `i64` and
 /// text.
 ///
-/// ### Terminology
-/// Shard parameters are supposed to be equivalent to elasticsearch shard parameter.
-/// Since they are
-///
 /// ## Document count error
 /// To improve performance, results from one segment are cut off at `segment_size`. On a index with
 /// a single segment this is fine. When combining results of multiple segments, terms that

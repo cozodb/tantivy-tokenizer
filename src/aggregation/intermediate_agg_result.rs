@@ -7,8 +7,7 @@ use std::cmp::Ordering;
 use columnar::ColumnType;
 use itertools::Itertools;
 use rustc_hash::FxHashMap;
-use serde::ser::SerializeSeq;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserialize, Serialize};
 
 use super::agg_req::{
     Aggregations, AggregationsInternal, BucketAggregationInternal, BucketAggregationType,
@@ -32,6 +31,10 @@ use crate::TantivyError;
 
 /// Contains the intermediate aggregation result, which is optimized to be merged with other
 /// intermediate results.
+///
+/// Notice: This struct should not be de/serialized via JSON format.
+/// See compatibility tests here: https://github.com/PSeitz/test_serde_formats
+/// TLDR: use ciborium.
 #[derive(Default, Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct IntermediateAggregationResults {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -514,37 +517,9 @@ pub struct IntermediateRangeBucketResult {
 #[derive(Default, Clone, Debug, PartialEq, Serialize, Deserialize)]
 /// Term aggregation including error counts
 pub struct IntermediateTermBucketResult {
-    #[serde(
-        serialize_with = "serialize_entries",
-        deserialize_with = "deserialize_entries"
-    )]
     pub(crate) entries: FxHashMap<Key, IntermediateTermBucketEntry>,
     pub(crate) sum_other_doc_count: u64,
     pub(crate) doc_count_error_upper_bound: u64,
-}
-
-// Serialize into a Vec to circument the JSON limitation, where keys can't be numbers
-fn serialize_entries<S>(
-    entries: &FxHashMap<Key, IntermediateTermBucketEntry>,
-    serializer: S,
-) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    let mut seq = serializer.serialize_seq(Some(entries.len()))?;
-    for (k, v) in entries {
-        seq.serialize_element(&(k, v))?;
-    }
-    seq.end()
-}
-
-fn deserialize_entries<'de, D>(
-    deserializer: D,
-) -> Result<FxHashMap<Key, IntermediateTermBucketEntry>, D::Error>
-where D: Deserializer<'de> {
-    let vec_entries: Vec<(Key, IntermediateTermBucketEntry)> =
-        Deserialize::deserialize(deserializer)?;
-    Ok(vec_entries.into_iter().collect())
 }
 
 impl IntermediateTermBucketResult {
@@ -926,27 +901,5 @@ mod tests {
             .unwrap();
 
         assert_eq!(tree_left, orig);
-    }
-
-    #[test]
-    fn test_term_bucket_json_roundtrip() {
-        let term_buckets = IntermediateTermBucketResult {
-            entries: vec![(
-                Key::F64(5.0),
-                IntermediateTermBucketEntry {
-                    doc_count: 10,
-                    sub_aggregation: Default::default(),
-                },
-            )]
-            .into_iter()
-            .collect(),
-            sum_other_doc_count: 0,
-            doc_count_error_upper_bound: 0,
-        };
-
-        let term_buckets_round: IntermediateTermBucketResult =
-            serde_json::from_str(&serde_json::to_string(&term_buckets).unwrap()).unwrap();
-
-        assert_eq!(term_buckets, term_buckets_round);
     }
 }
