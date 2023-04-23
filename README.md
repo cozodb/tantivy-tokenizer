@@ -1,3 +1,5 @@
+This is a fork of the official Tantivy package which only keeps the tokenizer, to be used in other projects.
+
 [![Docs](https://docs.rs/tantivy/badge.svg)](https://docs.rs/crate/tantivy/)
 [![Build Status](https://github.com/quickwit-oss/tantivy/actions/workflows/test.yml/badge.svg)](https://github.com/quickwit-oss/tantivy/actions/workflows/test.yml)
 [![codecov](https://codecov.io/gh/quickwit-oss/tantivy/branch/main/graph/badge.svg)](https://codecov.io/gh/quickwit-oss/tantivy)
