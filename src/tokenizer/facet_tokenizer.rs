@@ -1,5 +1,8 @@
 use super::{BoxTokenStream, Token, TokenStream, Tokenizer};
-use crate::schema::FACET_SEP_BYTE;
+// use crate::schema::FACET_SEP_BYTE;
+/// BYTE used as a level separation in the binary
+/// representation of facets.
+pub const FACET_SEP_BYTE: u8 = 0u8;
 
 /// The `FacetTokenizer` process a `Facet` binary representation
 /// and emits a token for all of its parent.
